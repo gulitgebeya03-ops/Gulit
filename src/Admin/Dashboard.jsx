@@ -1,4 +1,5 @@
-import products from "../../data/products";
+import products from "../data/Product";
+
 
 const Dashboard = () => {
   const totalProducts = products.length;
