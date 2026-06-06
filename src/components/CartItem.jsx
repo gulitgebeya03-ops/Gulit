@@ -1,40 +1,26 @@
-function CartItem({
-  item,
-  increaseQuantity,
-  decreaseQuantity,
-  removeItem,
-}) {
+function CartItem() {
   return (
-    <div className="bg-white shadow rounded-lg p-4 mb-4 flex justify-between items-center">
+    <div className="flex justify-between items-center bg-white shadow p-4 rounded">
       <div>
         <h3 className="font-semibold">
-          {item.name}
+          Product Name
         </h3>
 
-        <p>ETB {item.price}</p>
+        <p>ETB 1000</p>
 
-        <p>Quantity: {item.quantity}</p>
+        <p>Quantity: 1</p>
       </div>
 
       <div className="space-x-2">
-        <button
-          onClick={() => decreaseQuantity(item.id)}
-          className="bg-gray-200 px-3 py-1 rounded"
-        >
+        <button className="bg-gray-200 px-3 py-1 rounded">
           -
         </button>
 
-        <button
-          onClick={() => increaseQuantity(item.id)}
-          className="bg-gray-200 px-3 py-1 rounded"
-        >
+        <button className="bg-gray-200 px-3 py-1 rounded">
           +
         </button>
 
-        <button
-          onClick={() => removeItem(item.id)}
-          className="bg-red-500 text-white px-3 py-1 rounded"
-        >
+        <button className="bg-red-500 text-white px-3 py-1 rounded">
           Remove
         </button>
       </div>
