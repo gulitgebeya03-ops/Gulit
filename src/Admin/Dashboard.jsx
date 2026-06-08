@@ -1,4 +1,4 @@
-import products from "../data/Product";
+import products from "../data/Products";
 
 const metrics = (products) => [
   {
@@ -98,9 +98,8 @@ const Dashboard = () => {
                 <td className="px-5 py-3 font-medium text-gray-900">{p.name}</td>
                 <td className="px-5 py-3">
                   <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-[11px] ${
-                      categoryStyle[p.category] ?? "bg-gray-100 text-gray-600"
-                    }`}
+                    className={`inline-block px-2 py-0.5 rounded-full text-[11px] ${categoryStyle[p.category] ?? "bg-gray-100 text-gray-600"
+                      }`}
                   >
                     {p.category}
                   </span>
