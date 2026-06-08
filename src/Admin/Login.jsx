@@ -1,12 +1,23 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(email, password);
+
+    if (
+      email === "admin@gmail.com" &&
+      password === "123456"
+    ) {
+      navigate("/admin/dashboard");
+    } else {
+      alert("Invalid Email or Password");
+    }
   };
 
   return (
@@ -24,9 +35,7 @@ const Login = () => {
           placeholder="Email"
           className="w-full border p-3 rounded-lg mb-4"
           value={email}
-          onChange={(e) =>
-            setEmail(e.target.value)
-          }
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
@@ -34,9 +43,7 @@ const Login = () => {
           placeholder="Password"
           className="w-full border p-3 rounded-lg mb-4"
           value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
+          onChange={(e) => setPassword(e.target.value)}
         />
 
         <button
