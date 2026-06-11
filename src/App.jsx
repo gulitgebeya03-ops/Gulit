@@ -10,25 +10,21 @@ import logo from "./assets/logo.jpg";
 
 
 
-function App(){
-  return(
+function App() {
+  return (
     <>
-    <Header/>
-    <Routes>
-     <Route path="/" element={<Product/>}/>
-     <Route path="/admin/dashboard" element={<Dashboard/>}/>
-     <Route path="/admin/order" element={<Orders/>}/>
-     <Route path="/admin/login" element={<Login/>}/>
-     <Route path="/customer" element={<CustomerHome/>}/>
-     
-    
-
+      <Header />
+      <Routes>
+        <Route path="/" element={<Products />} />
+        <Route path="/admin/dashboard" element={<Dashboard />} />
+        <Route path="/admin/order" element={<Orders />} />
+        <Route path="/admin/login" element={<Login />} />
+        <Route path="/customer" element={<CustomerHome />} />
 
      
      
 
-    </Routes>
-    <Footer/>
+      </Routes>
     </>
   )
 }
