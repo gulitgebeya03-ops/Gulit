@@ -1,10 +1,14 @@
-import { Route, Routes } from "react-router-dom"
-import Products from "./Admin/Product";
+import {Route,Routes} from "react-router-dom"
+import Product from "./Admin/Product";
 import Dashboard from "./Admin/Dashboard";
 import Orders from "./Admin/Order";
 import Login from "./Admin/Login";
 import Header from "./components/Header";
-import CustomerHome from "./customers/Index";
+import Footer from "./components/Footer";
+import CustomerHome from "./customers/index";
+import logo from "./assets/logo.jpg";
+
+
 
 function App() {
   return (
@@ -17,6 +21,8 @@ function App() {
         <Route path="/admin/login" element={<Login />} />
         <Route path="/customer" element={<CustomerHome />} />
 
+     
+     
 
       </Routes>
     </>
