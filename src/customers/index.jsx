@@ -1,456 +1,254 @@
-import { useState, useMemo } from "react";
-// FIXED: 'products' is now outside the curly braces because it's a default export
-import products, { CATEGORIES, SORT_OPTIONS, formatPrice } from "../data/Products";
+// src/customers/index.jsx
+import React, { useState, useContext, useMemo } from 'react';
+import { AppContext } from '../context/AppContext';
+import { Search, ShoppingBag, Eye, Plus, Minus, X, HelpCircle, Truck } from 'lucide-react';
+import ProductDetails from './ProductDetails';
+import Checkout from './Checkout';
+import OrderTracking from './OrderTracking';
 
-export default function ProductShop() {
-  const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [sort, setSort] = useState("Featured");
-  const [cart, setCart] = useState({});
-  const [wishlist, setWishlist] = useState({});
-  const [cartOpen, setCartOpen] = useState(false);
-  const [hoveredId, setHoveredId] = useState(null);
+export default function CustomerHome() {
+  const { products, categories, cart, addToCart, updateCartQuantity, removeFromCart } = useContext(AppContext);
+  
+  // Filter States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
-  // New states to make your sidebar filters actually work
-  const [maxPrice, setMaxPrice] = useState(100000);
-  const [selectedTags, setSelectedTags] = useState([]);
+  // Interaction Modals States
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isTrackingOpen, setIsTrackingOpen] = useState(false);
 
-  // Toggle quick filters (New Arrivals, Best Sellers, In Stock)
-  function handleTagChange(tag) {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  }
-
-  const filtered = useMemo(() => {
-    let list = products.filter((p) => {
-      const matchesCategory = activeCategory === "All" || p.category === activeCategory;
-      const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-      const matchesPrice = p.price <= maxPrice;
-
-      // Map quick filter labels to your data object fields
-      const matchesTags = selectedTags.every((tag) => {
-        if (tag === "In Stock") return p.stock > 0;
-        if (tag === "New Arrivals") return p.tag?.toLowerCase() === "new";
-        if (tag === "Best Sellers") return p.tag?.toLowerCase() === "hot" || p.tag?.toLowerCase() === "sale";
-        return true;
-      });
-
-      return matchesCategory && matchesSearch && matchesPrice && matchesTags;
+  // Active Dynamic Processing Filters
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const matchesCategory = selectedCategory === "All" || p.category === selectedCategory;
+      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
     });
+  }, [products, selectedCategory, searchQuery]);
 
-    if (sort === "Price: Low to High") list = [...list].sort((a, b) => a.price - b.price);
-    else if (sort === "Price: High to Low") list = [...list].sort((a, b) => b.price - a.price);
-    else if (sort === "In Stock") list = [...list].sort((a, b) => b.stock - a.stock);
-    return list;
-  }, [search, activeCategory, sort, maxPrice, selectedTags]);
-
-  const cartItems = products.filter((p) => cart[p.id]);
-  const cartCount = cartItems.length;
-  const cartTotal = cartItems.reduce((sum, p) => sum + p.price, 0);
-
-  function toggleCart(id) {
-    setCart((prev) => {
-      const next = { ...prev };
-      if (next[id]) delete next[id]; else next[id] = true;
-      return next;
-    });
-  }
-
-  function toggleWishlist(id) {
-    setWishlist((prev) => {
-      const next = { ...prev };
-      if (next[id]) delete next[id]; else next[id] = true;
-      return next;
-    });
-  }
-
-  const catIcons = { All: "🛍️", Electronics: "⚡", Fashion: "👕", Home: "🏠", Sports: "🏃", Books: "📚" };
+  const cartTotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8f7f4", fontFamily: "'DM Sans', 'Inter', sans-serif" }}>
-      {/* ── TOP NAVBAR ── */}
-      <nav style={{
-        background: "#fff",
-        borderBottom: "1px solid #ebebeb",
-        position: "sticky", top: 0, zIndex: 100,
-        padding: "0 2rem",
-        display: "flex", alignItems: "center", gap: "1.5rem", height: 64,
-      }}>
-        <span style={{ flexShrink: 0, display: "flex", flexDirection: "column", lineHeight: 1, userSelect: "none" }}>
-          <span style={{
-            fontFamily: "'Georgia', 'Times New Roman', serif",
-            fontWeight: 700,
-            fontSize: 22,
-            letterSpacing: "0.18em",
-            color: "#111",
-            textTransform: "uppercase",
-          }}>
-            Gulit
-            <span style={{ color: "#e85d26", fontStyle: "italic", marginLeft: 3 }}>✦</span>
-          </span>
-          <span style={{
-            fontFamily: "'Georgia', 'Times New Roman', serif",
-            fontWeight: 400,
-            fontStyle: "italic",
-            fontSize: 13,
-            letterSpacing: "0.38em",
-            color: "#888",
-            textTransform: "uppercase",
-            marginTop: 1,
-          }}>Gebeya</span>
-        </span>
-
-        {/* Search */}
-        <div style={{ flex: 1, maxWidth: 440, position: "relative" }}>
-          <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#999" }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search products…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{
-              width: "100%", paddingLeft: 38, paddingRight: 16, height: 40,
-              border: "1px solid #e5e5e5", borderRadius: 10, background: "#f9f9f9",
-              fontSize: 13.5, color: "#222", outline: "none", boxSizing: "border-box",
-            }}
-          />
-        </div>
-
-        {/* Sort */}
-        <select
-          value={sort}
-          onChange={e => setSort(e.target.value)}
-          style={{
-            padding: "0 12px", height: 40, border: "1px solid #e5e5e5",
-            borderRadius: 10, fontSize: 13, background: "#fff", color: "#444",
-            cursor: "pointer", outline: "none", flexShrink: 0,
-          }}
+    <div className="bg-gray-50 min-h-screen text-gray-900 font-sans">
+      {/* Dynamic Promotion Sub-Header Bar */}
+      <div className="bg-orange-600 text-white text-center py-2 text-xs font-semibold px-4 flex justify-between items-center">
+        <span>⚡ Quick Payments via Cash on Delivery Enabled Across Towns!</span>
+        <button 
+          onClick={() => setIsTrackingOpen(true)} 
+          className="bg-orange-700 hover:bg-orange-800 px-3 py-0.5 rounded text-xs flex items-center gap-1 transition"
         >
-          {SORT_OPTIONS.map(o => <option key={o}>{o}</option>)}
-        </select>
-
-        {/* Wishlist */}
-        <button
-          style={{
-            position: "relative", background: "none", border: "1px solid #e5e5e5",
-            borderRadius: 10, width: 40, height: 40, display: "flex", alignItems: "center",
-            justifyContent: "center", cursor: "pointer", flexShrink: 0,
-          }}
-          aria-label="Wishlist"
-        >
-          <svg style={{ width: 18, height: 18 }} fill={Object.keys(wishlist).length > 0 ? "#e85d26" : "none"} stroke={Object.keys(wishlist).length > 0 ? "#e85d26" : "#666"} strokeWidth={2} viewBox="0 0 24 24">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-          {Object.keys(wishlist).length > 0 && (
-            <span style={{
-              position: "absolute", top: -5, right: -5, background: "#e85d26",
-              color: "#fff", fontSize: 9, fontWeight: 700, borderRadius: "50%",
-              width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center",
-            }}>{Object.keys(wishlist).length}</span>
-          )}
+          <Truck size={12} /> Track Order Status
         </button>
+      </div>
 
-        {/* Cart */}
-        <button
-          onClick={() => setCartOpen(!cartOpen)}
-          style={{
-            position: "relative", display: "flex", alignItems: "center", gap: 8,
-            background: "#111", color: "#fff", border: "none", borderRadius: 10,
-            padding: "0 16px", height: 40, fontSize: 13.5, fontWeight: 600,
-            cursor: "pointer", flexShrink: 0,
-          }}
-        >
-          <svg style={{ width: 16, height: 16 }} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 0 1-8 0" />
-          </svg>
-          Cart
-          {cartCount > 0 && (
-            <span style={{
-              background: "#e85d26", borderRadius: "50%", fontSize: 10, fontWeight: 700,
-              width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center",
-            }}>{cartCount}</span>
-          )}
-        </button>
-      </nav>
-
-      <div style={{ display: "flex", maxWidth: 1400, margin: "0 auto" }}>
-        {/* ── SIDEBAR ── */}
-        <aside style={{
-          width: 220, flexShrink: 0, padding: "2rem 1.25rem",
-          position: "sticky", top: 64, height: "calc(100vh - 64px)",
-          overflowY: "auto", borderRight: "1px solid #ebebeb", background: "#fff",
-        }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#aaa", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Categories</p>
-          {CATEGORIES.map(cat => {
-            const count = cat === "All" ? products.length : products.filter(p => p.category === cat).length;
-            return (
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        {/* Search and Category Module Filtering Component Grid */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-4 rounded-xl shadow-sm">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input 
+              type="text" 
+              placeholder="Search products by title, spec details..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2 overflow-x-auto pb-1 md:pb-0">
+            <button
+              onClick={() => setSelectedCategory("All")}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${
+                selectedCategory === "All" ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              All Categories
+            </button>
+            {categories.map(cat => (
               <button
                 key={cat}
-                onClick={() => setActiveCategory(cat)}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  width: "100%", padding: "9px 12px", borderRadius: 10, border: "none",
-                  background: activeCategory === cat ? "#111" : "transparent",
-                  color: activeCategory === cat ? "#fff" : "#555",
-                  fontSize: 13.5, fontWeight: activeCategory === cat ? 600 : 400,
-                  cursor: "pointer", marginBottom: 2, textAlign: "left", transition: "all .15s",
-                }}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${
+                  selectedCategory === cat ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
               >
-                <span>{catIcons[cat] || "🛍️"} {cat}</span>
-                <span style={{
-                  fontSize: 11, fontWeight: 600,
-                  background: activeCategory === cat ? "rgba(255,255,255,.18)" : "#f0f0f0",
-                  color: activeCategory === cat ? "#fff" : "#999",
-                  borderRadius: 6, padding: "1px 7px",
-                }}>{count}</span>
+                {cat}
               </button>
-            );
-          })}
-
-          {/* FIXED: Quick filters now work dynamically */}
-          <div style={{ borderTop: "1px solid #ebebeb", marginTop: 28, paddingTop: 24 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#aaa", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Quick filters</p>
-            {["New Arrivals", "Best Sellers", "In Stock"].map(tag => (
-              <label key={tag} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 12px", fontSize: 13, color: "#555", cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={selectedTags.includes(tag)}
-                  onChange={() => handleTagChange(tag)}
-                  style={{ accentColor: "#111" }}
-                /> {tag}
-              </label>
             ))}
           </div>
+        </div>
 
-          {/* FIXED: Price slider slider values state handler */}
-          <div style={{ borderTop: "1px solid #ebebeb", marginTop: 24, paddingTop: 24 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#aaa", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12 }}>Price range</p>
-            <input
-              type="range"
-              min={200}
-              max={100000}
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(Number(e.target.value))}
-              step={500}
-              style={{ width: "100%", accentColor: "#111" }}
-            />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#999", marginTop: 4 }}>
-              <span>ETB 200</span><span>Max: {formatPrice(maxPrice)}</span>
-            </div>
+        {/* Product Grid Listing Component */}
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
+            <HelpCircle className="mx-auto text-gray-300 w-12 h-12 mb-2" />
+            <p className="text-gray-500 font-medium">No matches found for your search filters.</p>
           </div>
-        </aside>
-
-        {/* ── MAIN ── */}
-        <main style={{ flex: 1, padding: "2rem 1.75rem" }}>
-          {/* Cart drawer */}
-          {cartOpen && (
-            <div style={{
-              background: "#fff", border: "1px solid #ebebeb", borderRadius: 16,
-              marginBottom: 24, overflow: "hidden",
-            }}>
-              <div style={{ padding: "14px 20px", borderBottom: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontWeight: 600, fontSize: 14 }}>Cart ({cartCount})</span>
-                <button onClick={() => setCartOpen(false)} style={{ background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#888" }}>×</button>
-              </div>
-              {cartCount === 0 ? (
-                <p style={{ padding: "20px", textAlign: "center", color: "#aaa", fontSize: 13 }}>Your cart is empty</p>
-              ) : (
-                <>
-                  {cartItems.map(p => (
-                    <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: "1px solid #f8f8f8" }}>
-                      <img src={p.image} alt={p.name} style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", background: "#f0f0f0" }} />
-                      <div style={{ flex: 1 }}>
-                        <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: "#111" }}>{p.name}</p>
-                        <p style={{ margin: 0, fontSize: 12, color: "#888" }}>{formatPrice(p.price)}</p>
-                      </div>
-                      <button onClick={() => toggleCart(p.id)} style={{ background: "none", border: "none", color: "#e85d26", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>Remove</button>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredProducts.map(product => (
+              <div key={product.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col group">
+                <div className="relative bg-gray-100 pt-[100%] overflow-hidden">
+                  <img 
+                    src={product.image || "https://picsum.photos/400"} 
+                    alt={product.name} 
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  />
+                  {product.stock === 0 && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider">
+                      Sold Out
                     </div>
-                  ))}
-                  <div style={{ padding: "14px 20px", background: "#f9f9f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 13, color: "#666" }}>Total</span>
-                    <span style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>{formatPrice(cartTotal)}</span>
+                  )}
+                  {product.tag && product.stock > 0 && (
+                    <span className="absolute top-2 left-2 bg-red-500 text-white font-bold text-[10px] px-2 py-0.5 rounded shadow">
+                      {product.tag.toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="p-4 flex flex-col flex-1">
+                  <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">{product.category}</span>
+                  <h3 className="font-bold text-sm text-gray-800 line-clamp-1 mb-1">{product.name}</h3>
+                  <p className="text-xs text-gray-500 line-clamp-2 flex-1 mb-3">{product.description}</p>
+                  
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-50">
+                    <div>
+                      <span className="text-[11px] block text-gray-400 font-medium">Price</span>
+                      <span className="font-extrabold text-base text-gray-900">ETB {product.price.toLocaleString()}</span>
+                    </div>
+                    <span className={`text-[11px] font-semibold ${product.stock <= 3 ? 'text-red-500' : 'text-gray-400'}`}>
+                      {product.stock > 0 ? `${product.stock} left` : 'Out of stock'}
+                    </span>
                   </div>
-                </>
-              )}
-            </div>
-          )}
 
-          {/* Header row */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <div>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#111", letterSpacing: "-0.5px" }}>
-                {activeCategory === "All" ? "All Products" : activeCategory}
-              </h1>
-              <p style={{ margin: 0, fontSize: 13, color: "#aaa", marginTop: 2 }}>
-                {filtered.length} {filtered.length === 1 ? "product" : "products"}
-                {search && ` for "${search}"`}
-              </p>
-            </div>
+                  <div className="grid grid-cols-4 gap-2 mt-4">
+                    <button
+                      onClick={() => setSelectedProduct(product)}
+                      className="col-span-1 bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-lg transition flex items-center justify-center"
+                      title="Inspect Details"
+                    >
+                      <Eye size={16} />
+                    </button>
+                    <button
+                      disabled={product.stock === 0}
+                      onClick={() => addToCart(product, 1)}
+                      className={`col-span-3 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm ${
+                        product.stock === 0 
+                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                          : 'bg-orange-600 hover:bg-orange-700 text-white'
+                      }`}
+                    >
+                      <ShoppingBag size={14} /> Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
+        )}
+      </div>
 
-          {/* Grid */}
-          {filtered.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "80px 0", color: "#bbb" }}>
-              <p style={{ fontSize: 14 }}>No products match your filters.</p>
+      {/* Floating Shopping Cart Sidebar Access Button trigger */}
+      {cartItemCount > 0 && (
+        <button
+          onClick={() => setIsCartOpen(true)}
+          className="fixed bottom-6 right-6 bg-gray-900 text-white p-4 rounded-full shadow-2xl hover:bg-black transition transform hover:scale-105 z-40 flex items-center gap-2 font-bold text-sm"
+        >
+          <div className="relative">
+            <ShoppingBag size={20} />
+            <span className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-black animate-pulse">
+              {cartItemCount}
+            </span>
+          </div>
+          <span>ETB {cartTotal.toLocaleString()}</span>
+        </button>
+      )}
+
+      {/* Shopping Cart Drawer Panel Component */}
+      {isCartOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex justify-end">
+          <div className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col animate-slide-in">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="text-orange-600 w-5 h-5" />
+                <h2 className="font-extrabold text-base text-gray-800">Your Shopping Cart</h2>
+              </div>
+              <button onClick={() => setIsCartOpen(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-200 transition">
+                <X size={20} />
+              </button>
             </div>
-          ) : (
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-              gap: 16,
-            }}>
-              {filtered.map(product => {
-                const inCart = !!cart[product.id];
-                const inWish = !!wishlist[product.id];
-                const isHov = hoveredId === product.id;
-                return (
-                  <div
-                    key={product.id}
-                    onMouseEnter={() => setHoveredId(product.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                    style={{
-                      background: "#fff",
-                      borderRadius: 16,
-                      overflow: "hidden",
-                      border: "1px solid #ebebeb",
-                      transition: "box-shadow .2s, transform .2s",
-                      boxShadow: isHov ? "0 8px 32px rgba(0,0,0,.10)" : "none",
-                      transform: isHov ? "translateY(-2px)" : "none",
-                      cursor: "default",
-                    }}
-                  >
-                    {/* Image */}
-                    <div style={{ position: "relative", overflow: "hidden" }}>
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        style={{
-                          width: "100%", aspectRatio: "1/1", objectFit: "cover",
-                          display: "block", background: "#f5f5f5",
-                          transition: "transform .35s",
-                          transform: isHov ? "scale(1.05)" : "scale(1)",
-                        }}
-                      />
-                      {product.tag && (
-                        <span style={{
-                          position: "absolute", top: 10, left: 10,
-                          background: product.tag === "New" ? "#111" : "#e85d26",
-                          color: "#fff", fontSize: 10, fontWeight: 700,
-                          padding: "3px 9px", borderRadius: 6, letterSpacing: .5,
-                        }}>{product.tag.toUpperCase()}</span>
-                      )}
-                      <button
-                        onClick={() => toggleWishlist(product.id)}
-                        style={{
-                          position: "absolute", top: 10, right: 10,
-                          background: "#fff", border: "none", borderRadius: 8,
-                          width: 32, height: 32, display: "flex", alignItems: "center",
-                          justifyContent: "center", cursor: "pointer",
-                          boxShadow: "0 1px 6px rgba(0,0,0,.1)",
-                          opacity: isHov || inWish ? 1 : 0,
-                          transition: "opacity .2s",
-                        }}
-                        aria-label="Wishlist"
-                      >
-                        <svg style={{ width: 14, height: 14 }} fill={inWish ? "#e85d26" : "none"} stroke={inWish ? "#e85d26" : "#888"} strokeWidth={2} viewBox="0 0 24 24">
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                      </button>
-                      {isHov && !inCart && (
-                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
-                          <button
-                            onClick={() => toggleCart(product.id)}
-                            style={{
-                              width: "100%", padding: "11px 0",
-                              background: "rgba(17,17,17,.88)", color: "#fff",
-                              border: "none", fontSize: 13, fontWeight: 600,
-                              cursor: "pointer", letterSpacing: .3,
-                              backdropFilter: "blur(4px)",
-                            }}
-                          >+ Add to Cart</button>
-                        </div>
-                      )}
-                      {inCart && (
-                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
-                          <button
-                            onClick={() => toggleCart(product.id)}
-                            style={{
-                              width: "100%", padding: "11px 0",
-                              background: "#e85d26", color: "#fff",
-                              border: "none", fontSize: 13, fontWeight: 600,
-                              cursor: "pointer",
-                            }}
-                          >✓ In Cart — Remove</button>
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Info */}
-                    <div style={{ padding: "14px 16px 16px" }}>
-                      <p style={{ margin: "0 0 2px", fontSize: 10.5, fontWeight: 700, color: "#bbb", letterSpacing: 1.2, textTransform: "uppercase" }}>
-                        {product.category}
-                      </p>
-                      <p style={{ margin: "0 0 6px", fontSize: 14, fontWeight: 600, color: "#111", lineHeight: 1.3 }}>
-                        {product.name}
-                      </p>
-                      <p style={{ margin: "0 0 12px", fontSize: 12, color: "#888", lineHeight: 1.55, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                        {product.description}
-                      </p>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div>
-                          <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#111" }}>{formatPrice(product.price)}</p>
-                          <p style={{ margin: 0, fontSize: 11, color: "#bbb" }}>{product.stock} left</p>
-                        </div>
-                        <button
-                          onClick={() => toggleCart(product.id)}
-                          style={{
-                            width: 34, height: 34, borderRadius: 10, border: "none",
-                            background: inCart ? "#111" : "#f3f3f3",
-                            color: inCart ? "#fff" : "#444",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            cursor: "pointer", transition: "all .15s", flexShrink: 0,
-                          }}
-                          aria-label={inCart ? "Remove from cart" : "Add to cart"}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {cart.length === 0 ? (
+                <div className="text-center py-20 text-gray-400">
+                  <ShoppingBag size={48} className="mx-auto mb-2 text-gray-200" />
+                  <p className="text-sm">Your shopping basket is completely empty.</p>
+                </div>
+              ) : (
+                cart.map(item => (
+                  <div key={item.product.id} className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <img src={item.product.image} alt={item.product.name} className="w-16 h-16 object-cover rounded-lg bg-white border" />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-sm text-gray-800 truncate">{item.product.name}</h4>
+                      <p className="text-xs text-gray-500 mb-1">ETB {item.product.price.toLocaleString()}</p>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => updateCartQuantity(item.product.id, -1)}
+                          className="bg-white border border-gray-200 p-1 rounded-md text-gray-600 hover:bg-gray-100"
                         >
-                          {inCart ? (
-                            <svg style={{ width: 14, height: 14 }} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>
-                          ) : (
-                            <svg style={{ width: 14, height: 14 }} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-                          )}
+                          <Minus size={12} />
+                        </button>
+                        <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
+                        <button 
+                          onClick={() => updateCartQuantity(item.product.id, 1)}
+                          className="bg-white border border-gray-200 p-1 rounded-md text-gray-600 hover:bg-gray-100"
+                        >
+                          <Plus size={12} />
                         </button>
                       </div>
                     </div>
+                    <div className="text-right flex flex-col justify-between items-end h-full">
+                      <button onClick={() => removeFromCart(item.product.id)} className="text-gray-400 hover:text-red-500 p-1 transition">
+                        <X size={14} />
+                      </button>
+                      <span className="text-sm font-extrabold text-gray-900 mt-2">
+                        ETB {(item.product.price * item.quantity).toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
-          )}
-        </main>
-      </div>
 
-      {/* Floating cart bar */}
-      {cartCount > 0 && !cartOpen && (
-        <div
-          onClick={() => setCartOpen(true)}
-          style={{
-            position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
-            background: "#111", color: "#fff", borderRadius: 50,
-            padding: "14px 28px", display: "flex", alignItems: "center", gap: 20,
-            cursor: "pointer", boxShadow: "0 8px 32px rgba(0,0,0,.25)",
-            fontSize: 14, fontWeight: 600, zIndex: 200,
-            transition: "box-shadow .2s",
-          }}
-        >
-          <span style={{ background: "#e85d26", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>{cartCount}</span>
-          View cart
-          <span style={{ color: "#e85d26", marginLeft: 8 }}>{formatPrice(cartTotal)}</span>
+            {cart.length > 0 && (
+              <div className="p-4 border-t border-gray-100 bg-gray-50 shadow-inner">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-sm font-semibold text-gray-600">Cart Total Subtotal:</span>
+                  <span className="text-xl font-black text-gray-900">ETB {cartTotal.toLocaleString()}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsCartOpen(false);
+                    setIsCheckoutOpen(true);
+                  }}
+                  className="w-full bg-orange-600 text-white font-bold text-center py-3 rounded-xl hover:bg-orange-700 shadow-md transition"
+                >
+                  Proceed to Secure Checkout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
+
+      {/* Embedded Component Modals Layer */}
+      {selectedProduct && <ProductDetails product={selectedProduct} onClose={() => setSelectedProduct(null)} />}
+      {isCheckoutOpen && <Checkout onClose={() => setIsCheckoutOpen(false)} />}
+      {isTrackingOpen && <OrderTracking onClose={() => setIsTrackingOpen(false)} />}
     </div>
   );
 }

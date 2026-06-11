@@ -1,6 +1,8 @@
-import products from "../data/Products";
+// src/Admin/Dashboard.jsx
+import React, { useContext } from "react";
+import { AppContext } from "../context/AppContext";
 
-const metrics = (products) => [
+const metrics = (products = []) => [
   {
     label: "Total products",
     value: products.length,
@@ -14,7 +16,7 @@ const metrics = (products) => [
   },
   {
     label: "Total stock",
-    value: products.reduce((t, p) => t + p.stock, 0),
+    value: products.reduce((t, p) => t + (Number(p.stock) || 0), 0),
     sub: "units available",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
@@ -25,7 +27,7 @@ const metrics = (products) => [
   },
   {
     label: "Inventory value",
-    value: "ETB " + products.reduce((t, p) => t + p.price * p.stock, 0).toLocaleString(),
+    value: "ETB " + products.reduce((t, p) => t + (Number(p.price) || 0) * (Number(p.stock) || 0), 0).toLocaleString(),
     sub: "at current prices",
     icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
@@ -39,16 +41,21 @@ const metrics = (products) => [
 const categoryStyle = {
   Electronics: "bg-blue-50 text-blue-700",
   Fashion: "bg-purple-50 text-purple-700",
+  Home: "bg-orange-50 text-orange-700",
+  Sports: "bg-green-50 text-green-700",
+  Books: "bg-amber-50 text-amber-700",
 };
 
-const maxStock = Math.max(...products.map((p) => p.stock));
-
 const Dashboard = () => {
+  // Pull from AppContext safely, fallback to an empty array if context is undefined
+  const context = useContext(AppContext);
+  const products = context?.products || [];
+  
   const cards = metrics(products);
+  const maxStock = products.length > 0 ? Math.max(...products.map((p) => Number(p.stock) || 0)) : 0;
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-medium text-gray-900">Admin dashboard</h1>
@@ -76,50 +83,60 @@ const Dashboard = () => {
         <div className="px-5 py-3.5 border-b border-gray-100">
           <h2 className="text-sm font-medium text-gray-800">Products</h2>
         </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100">
-              {["Name", "Category", "Price", "Stock"].map((h) => (
-                <th
-                  key={h}
-                  className="px-5 py-2.5 text-left text-[11px] uppercase tracking-wider text-gray-400 font-normal"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p, i) => (
-              <tr
-                key={p.id}
-                className={i < products.length - 1 ? "border-b border-gray-50" : ""}
-              >
-                <td className="px-5 py-3 font-medium text-gray-900">{p.name}</td>
-                <td className="px-5 py-3">
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-[11px] ${categoryStyle[p.category] ?? "bg-gray-100 text-gray-600"
-                      }`}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100">
+                {["Name", "Category", "Price", "Stock"].map((h) => (
+                  <th
+                    key={h}
+                    className="px-5 py-2.5 text-left text-[11px] uppercase tracking-wider text-gray-400 font-normal"
                   >
-                    {p.category}
-                  </span>
-                </td>
-                <td className="px-5 py-3 text-gray-700">ETB {p.price.toLocaleString()}</td>
-                <td className="px-5 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-700 w-6 text-right">{p.stock}</span>
-                    <div className="flex-1 h-1 rounded-full bg-gray-100 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gray-400"
-                        style={{ width: `${(p.stock / maxStock) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                </td>
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {products.map((p, i) => (
+                <tr
+                  key={p.id || i}
+                  className={i < products.length - 1 ? "border-b border-gray-50" : ""}
+                >
+                  <td className="px-5 py-3 font-medium text-gray-900">{p.name || "Unnamed Product"}</td>
+                  <td className="px-5 py-3">
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded-full text-[11px] ${
+                        categoryStyle[p.category] || "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {p.category || "Uncategorized"}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-gray-700">ETB {(Number(p.price) || 0).toLocaleString()}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-700 w-6 text-right">{p.stock || 0}</span>
+                      <div className="flex-1 h-1 rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gray-400"
+                          style={{ width: maxStock > 0 ? `${((Number(p.stock) || 0) / maxStock) * 100}%` : "0%" }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {products.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="px-5 py-8 text-center text-gray-400">
+                    No products found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
