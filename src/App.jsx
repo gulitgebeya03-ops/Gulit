@@ -9,20 +9,22 @@ import ProductAdmin from "./Admin/Product";
 import { AppContext } from './context/AppContext';
 // FIXED: Removed the non-existent 'ReceiptCw' icon token to prevent bundling crashes
 import { ShoppingBag, LayoutDashboard, Database, Store, LogIn, LogOut } from 'lucide-react';
+import Header from "./components/Header"
+import Footer from "./components/Footer"
 
 function App() {
-  const { isAdminLoggedIn, setIsAdminLoggedIn } = useContext(AppContext);
+  const { isAdminLoggedIn, handleLogout } = useContext(AppContext);
   const location = useLocation();
 
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gray-50 text-gray-900 font-sans">
-      
+
       {/* Universal Shared Context Header Navigation Element */}
       <nav className="bg-gray-900 text-white shadow-md border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
-          
+
           {/* Logo Platform System Identity Mapping */}
           <Link to="/" className="flex flex-col select-none group">
             <span className="font-serif font-black text-xl tracking-widest text-white group-hover:text-orange-500 transition duration-200">
@@ -39,24 +41,24 @@ function App() {
 
             {isAdminLoggedIn ? (
               <>
-                <Link to="/admin/dashboard" className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${location.pathname==='/admin/dashboard' ? 'bg-orange-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}>
+                <Link to="/admin/dashboard" className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${location.pathname === '/admin/dashboard' ? 'bg-orange-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}>
                   <LayoutDashboard size={14} /> <span className="hidden sm:inline">Metrics</span>
                 </Link>
-                <Link to="/admin/products" className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${location.pathname==='/admin/products' ? 'bg-orange-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}>
+                <Link to="/admin/products" className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${location.pathname === '/admin/products' ? 'bg-orange-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}>
                   <Database size={14} /> <span className="hidden sm:inline">Inventory</span>
                 </Link>
-                <Link to="/admin/order" className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${location.pathname==='/admin/order' ? 'bg-orange-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}>
+                <Link to="/admin/order" className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${location.pathname === '/admin/order' ? 'bg-orange-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}>
                   <ShoppingBag size={14} /> <span className="hidden sm:inline">Desk</span>
                 </Link>
-                <button 
-                  onClick={() => { setIsAdminLoggedIn(false); window.location.href='/'; }}
+                <button
+                  onClick={() => { handleLogout(); window.location.href = '/'; }}
                   className="px-3 py-2 text-red-400 hover:bg-red-950/30 border border-red-900/40 rounded-lg flex items-center gap-1 transition"
                 >
                   <LogOut size={14} /> <span className="hidden sm:inline">Exit</span>
                 </button>
               </>
             ) : (
-              <Link to="/admin/login" className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${location.pathname==='/admin/login' ? 'bg-orange-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}>
+              <Link to="/admin/login" className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${location.pathname === '/admin/login' ? 'bg-orange-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}>
                 <LogIn size={14} /> <span>Admin Console Gateway</span>
               </Link>
             )}

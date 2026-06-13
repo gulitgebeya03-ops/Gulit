@@ -2,25 +2,28 @@
 import React, { useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, AlertCircle } from 'lucide-react';
+import { ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function Login() {
-  const { setIsAdminLoggedIn } = useContext(AppContext);
+  const { handleLogin } = useContext(AppContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [err, setErr] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     setErr('');
-    
-    // MVP Standard static dashboard keys credentials
-    if (email === 'admin@gulit.com' && password === 'admin123') {
-      setIsAdminLoggedIn(true);
+    setSubmitting(true);
+    const result = await handleLogin(email, password);
+    setSubmitting(false);
+    if (result.success && result.role === 'admin') {
       navigate('/admin/dashboard');
+    } else if (result.success) {
+      setErr('This account does not have admin privileges.');
     } else {
-      setErr('Invalid email credentials or administrative password.');
+      setErr(result.error || 'Invalid email or password.');
     }
   };
 
@@ -41,12 +44,12 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Account Email</label>
             <input 
               type="email" 
-              placeholder="admin@gulit.com"
+              placeholder="admin@mail.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
               className="w-full p-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -64,12 +67,13 @@ export default function Login() {
               required
             />
           </div>
-          <button type="submit" className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition text-sm shadow">
-            Authorize Credentials
+          <button type="submit" disabled={submitting} className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition text-sm shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            {submitting && <Loader2 size={16} className="animate-spin" />}
+            {submitting ? 'Authenticating...' : 'Authorize Credentials'}
           </button>
         </form>
         <div className="mt-4 text-center text-[11px] text-gray-400 bg-gray-50 p-2 rounded-lg font-mono">
-          Hint: admin@gulit.com / admin123
+          Hint: admin@mail.com / admin123
         </div>
       </div>
     </div>

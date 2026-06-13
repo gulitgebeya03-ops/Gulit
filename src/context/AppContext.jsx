@@ -1,21 +1,29 @@
 // src/context/AppContext.jsx
-import React, { createContext, useState } from 'react';
-import initialProducts from '../data/Products';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
+import {
+  fetchProducts as apiFetchProducts,
+  fetchCategories as apiFetchCategories,
+  createProduct as apiCreateProduct,
+  updateProduct as apiUpdateProduct,
+  deleteProductFromApi,
+  mapProductToApi,
+  login as apiLogin,
+  setAccessToken,
+  getAccessToken,
+} from '../services/api';
 
-// 1. Create and export the Context object cleanly
 export const AppContext = createContext();
 
-// 2. Define the Provider Component wrapper
 export const AppProvider = ({ children }) => {
-  // --- Core States Configuration ---
-  const [products, setProducts] = useState(initialProducts || []);
-  const [categories, setCategories] = useState(["Electronics", "Fashion", "Home", "Sports", "Books"]);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [authToken, setAuthToken] = useState(null);
   const [currentCustomer, setCurrentCustomer] = useState(null);
-  const [cart, setCart] = useState([]); 
-  const [deliveryFee, setDeliveryFee] = useState(150); // Default delivery fee in ETB
+  const [cart, setCart] = useState([]);
+  const [deliveryFee, setDeliveryFee] = useState(150);
+  const [loading, setLoading] = useState(true);
 
-  // Dynamic Store Orders Tracking State
   const [orders, setOrders] = useState([
     {
       id: "ORD-101",
@@ -47,20 +55,38 @@ export const AppProvider = ({ children }) => {
     }
   ]);
 
-  // Track dynamic list of structural customers based on checkouts
   const [customers, setCustomers] = useState([
     { id: "CUST-1", name: "Abebe Kebede", phone: "0911223344", address: "Bole, Khartoum St, Addis Ababa" },
     { id: "CUST-2", name: "Chaltu Ibrahim", phone: "0912345678", address: "Megenagna, Ring Road, Addis Ababa" }
   ]);
 
-  // --- Core Methods & Actions ---
-  
+  useEffect(() => {
+    let cancelled = false;
+    async function loadData() {
+      try {
+        const [apiProducts, apiCategories] = await Promise.all([
+          apiFetchProducts(),
+          apiFetchCategories(),
+        ]);
+        if (cancelled) return;
+        setProducts(apiProducts || []);
+        setCategories((apiCategories || []).map(c => c.name));
+      } catch (err) {
+        console.error('Failed to load API data:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    loadData();
+    return () => { cancelled = true; };
+  }, []);
+
   const addToCart = (product, quantity = 1) => {
     setCart((prevCart) => {
       const existing = prevCart.find(item => item.product.id === product.id);
       if (existing) {
         const newQty = existing.quantity + quantity;
-        if (newQty > product.stock) return prevCart; // Prevent overflow beyond available stock
+        if (newQty > product.stock) return prevCart;
         return prevCart.map(item => item.product.id === product.id ? { ...item, quantity: newQty } : item);
       }
       return [...prevCart, { product, quantity }];
@@ -74,7 +100,7 @@ export const AppProvider = ({ children }) => {
           const match = products.find(p => p.id === productId);
           const targets = item.quantity + amount;
           if (targets <= 0) return null;
-          if (match && targets > match.stock) return item; // Block exceeding stock caps
+          if (match && targets > match.stock) return item;
           return { ...item, quantity: targets };
         }
         return item;
@@ -87,6 +113,15 @@ export const AppProvider = ({ children }) => {
   };
 
   const clearCart = () => setCart([]);
+
+  const refreshProducts = useCallback(async () => {
+    try {
+      const apiProducts = await apiFetchProducts();
+      setProducts(apiProducts || []);
+    } catch (err) {
+      console.error('Failed to refresh products:', err);
+    }
+  }, []);
 
   const placeOrder = (customerDetails) => {
     const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -112,8 +147,7 @@ export const AppProvider = ({ children }) => {
       date: new Date().toISOString().split('T')[0]
     };
 
-    // Deduct stock levels from central catalog
-    setProducts(prevProducts => 
+    setProducts(prevProducts =>
       prevProducts.map(p => {
         const orderedItem = cart.find(c => c.product.id === p.id);
         if (orderedItem) {
@@ -123,7 +157,6 @@ export const AppProvider = ({ children }) => {
       })
     );
 
-    // Register unique customer records
     setCustomers(prevCusts => {
       if (!prevCusts.some(c => c.phone === customerDetails.phone)) {
         return [...prevCusts, {
@@ -141,18 +174,42 @@ export const AppProvider = ({ children }) => {
     return newOrderId;
   };
 
-  // Product Manager CRUD Implementations
-  const createProduct = (prodData) => {
-    const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-    setProducts(prev => [...prev, { id: newId, ...prodData, price: Number(prodData.price), stock: Number(prodData.stock) }]);
+  const createProduct = async (prodData) => {
+    try {
+      const apiData = mapProductToApi(prodData);
+      const created = await apiCreateProduct(apiData);
+      setProducts(prev => [...prev, { ...created, stock: Number(prodData.stock) || 10, tag: prodData.tag || null }]);
+      return created;
+    } catch (err) {
+      console.error('Failed to create product:', err);
+      throw err;
+    }
   };
 
-  const updateProduct = (id, updatedData) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updatedData, price: Number(updatedData.price), stock: Number(updatedData.stock) } : p));
+  const updateProduct = async (id, updatedData) => {
+    try {
+      const apiData = mapProductToApi(updatedData);
+      const updated = await apiUpdateProduct(id, apiData);
+      setProducts(prev => prev.map(p => p.id === id ? {
+        ...updated,
+        stock: Number(updatedData.stock) ?? p.stock,
+        tag: updatedData.tag ?? p.tag,
+      } : p));
+      return updated;
+    } catch (err) {
+      console.error('Failed to update product:', err);
+      throw err;
+    }
   };
 
-  const deleteProduct = (id) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
+  const deleteProduct = async (id) => {
+    try {
+      await deleteProductFromApi(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error('Failed to delete product:', err);
+      throw err;
+    }
   };
 
   const updateStockDirectly = (id, newStock) => {
@@ -163,13 +220,34 @@ export const AppProvider = ({ children }) => {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
   };
 
-  // 3. Return statement distribution
+  const handleLogin = async (email, password) => {
+    try {
+      const result = await apiLogin(email, password);
+      setAuthToken(result.access_token);
+      setAccessToken(result.access_token);
+      if (result.role === 'admin') {
+        setIsAdminLoggedIn(true);
+        return { success: true, role: 'admin' };
+      }
+      return { success: true, role: result.role || 'customer', user: result };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAdminLoggedIn(false);
+    setAuthToken(null);
+    setAccessToken(null);
+  };
+
   return (
     <AppContext.Provider value={{
-      products, categories, setCategories, orders, customers, deliveryFee, setDeliveryFee,
+      products, categories, orders, customers, deliveryFee, setDeliveryFee,
       cart, addToCart, updateCartQuantity, removeFromCart, clearCart, placeOrder,
       createProduct, updateProduct, deleteProduct, updateStockDirectly, updateOrderStatus,
-      isAdminLoggedIn, setIsAdminLoggedIn, currentCustomer, setCurrentCustomer
+      isAdminLoggedIn, setIsAdminLoggedIn, currentCustomer, setCurrentCustomer,
+      authToken, handleLogin, handleLogout, loading, refreshProducts,
     }}>
       {children}
     </AppContext.Provider>
