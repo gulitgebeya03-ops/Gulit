@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { AppContext } from "../context/AppContext";
 
 const Products = () => {
@@ -69,9 +69,9 @@ const Products = () => {
                       Edit
                     </button>
 
-                    <button 
+                    <button
                       onClick={() => {
-                        if(confirm(`Are you sure you want to delete ${product.name}?`)) {
+                        if (confirm(`Are you sure you want to delete ${product.name}?`)) {
                           deleteProduct(product.id);
                         }
                       }}

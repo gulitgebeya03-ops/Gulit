@@ -1,11 +1,11 @@
 // src/customers/Checkout.jsx
-import React, { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import { X, CheckCircle, Info } from 'lucide-react';
 
 export default function Checkout({ onClose }) {
   const { cart, deliveryFee, placeOrder } = useContext(AppContext);
-  
+
   // Checkout Fields State
   const [formData, setFormData] = useState({
     name: '',
@@ -35,6 +35,15 @@ export default function Checkout({ onClose }) {
     setSuccessOrderId(trackingId);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   if (successOrderId) {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -44,7 +53,7 @@ export default function Checkout({ onClose }) {
           </div>
           <h3 className="text-lg font-black text-gray-900 mb-1">Order Placed Successfully!</h3>
           <p className="text-xs text-gray-500 mb-4">Thank you for your business. Your shipment request has been recorded under the tracking ID below.</p>
-          
+
           <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 font-mono text-sm font-bold text-orange-600 inline-block px-6 mb-6">
             {successOrderId}
           </div>
@@ -62,24 +71,24 @@ export default function Checkout({ onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh] md:max-h-none overflow-y-auto md:overflow-visible">
-        
+      <div className="bg-white rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh] md:max-h-none overflow-y-auto md:overflow-visible" onClick={(e) => e.stopPropagation()}>
+
         {/* Customer Shipping Form Section */}
         <form onSubmit={handleSubmit} className="w-full md:w-1/2 p-6 border-b md:border-b-0 md:border-r border-gray-100 flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-base font-black text-gray-900">Delivery Information</h3>
-              <button type="button" onClick={onClose} className="md:hidden text-gray-400 hover:text-gray-600"><X size={18} /></button>
+              <button type="button" aria-label="Close checkout" onClick={onClose} className="md:hidden text-gray-400 hover:text-gray-600"><X size={18} /></button>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Customer Full Name</label>
-                <input 
+                <input
                   type="text"
                   placeholder="e.g. Almaz Yoseph"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className={`w-full p-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors.name ? 'border-red-400' : 'border-gray-200'}`}
                 />
                 {errors.name && <p className="text-red-500 text-[11px] mt-0.5">{errors.name}</p>}
@@ -87,11 +96,11 @@ export default function Checkout({ onClose }) {
 
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Phone Number</label>
-                <input 
+                <input
                   type="text"
                   placeholder="e.g. 0911XXXXXX"
                   value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className={`w-full p-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors.phone ? 'border-red-400' : 'border-gray-200'}`}
                 />
                 {errors.phone && <p className="text-red-500 text-[11px] mt-0.5">{errors.phone}</p>}
@@ -99,11 +108,11 @@ export default function Checkout({ onClose }) {
 
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Delivery Address</label>
-                <textarea 
+                <textarea
                   rows="3"
                   placeholder="Specific subcity, neighborhood, building/house number details..."
                   value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className={`w-full p-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors.address ? 'border-red-400' : 'border-gray-200'}`}
                 />
                 {errors.address && <p className="text-red-500 text-[11px] mt-0.5">{errors.address}</p>}
@@ -129,11 +138,11 @@ export default function Checkout({ onClose }) {
 
         {/* Order Summary Summary Drawer Panel */}
         <div className="w-full md:w-1/2 bg-gray-50 p-6 flex flex-col justify-between relative">
-          <button type="button" onClick={onClose} className="hidden md:block absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={18} /></button>
-          
+          <button type="button" aria-label="Close checkout" onClick={onClose} className="hidden md:block absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={18} /></button>
+
           <div>
             <h3 className="text-base font-black text-gray-900 mb-4">Order Summary</h3>
-            
+
             <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1 mb-4">
               {cart.map(item => (
                 <div key={item.product.id} className="flex justify-between items-start gap-4 bg-white p-2.5 rounded-lg border border-gray-100 text-xs">

@@ -1,5 +1,5 @@
 // src/context/AppContext.jsx
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useState, useEffect, useCallback } from 'react';
 import {
   fetchProducts as apiFetchProducts,
   fetchCategories as apiFetchCategories,
@@ -9,9 +9,9 @@ import {
   mapProductToApi,
   login as apiLogin,
   setAccessToken,
-  getAccessToken,
 } from '../services/api';
 
+/* eslint-disable react-refresh/only-export-components */
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
@@ -192,7 +192,7 @@ export const AppProvider = ({ children }) => {
       const updated = await apiUpdateProduct(id, apiData);
       setProducts(prev => prev.map(p => p.id === id ? {
         ...updated,
-        stock: Number(updatedData.stock) ?? p.stock,
+        stock: updatedData.stock !== undefined ? Number(updatedData.stock) : p.stock,
         tag: updatedData.tag ?? p.tag,
       } : p));
       return updated;

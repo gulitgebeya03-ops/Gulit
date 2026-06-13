@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { AppContext } from "../context/AppContext";
 
 const Orders = () => {
@@ -45,13 +45,12 @@ const Orders = () => {
                   </td>
                   <td className="p-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold text-white inline-block ${
-                        order.status === "Delivered"
+                      className={`px-3 py-1 rounded-full text-xs font-semibold text-white inline-block ${order.status === "Delivered"
                           ? "bg-green-500"
                           : order.status === "Pending"
-                          ? "bg-yellow-500"
-                          : "bg-blue-500"
-                      }`}
+                            ? "bg-yellow-500"
+                            : "bg-blue-500"
+                        }`}
                     >
                       {order.status}
                     </span>

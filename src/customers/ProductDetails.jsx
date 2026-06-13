@@ -1,5 +1,5 @@
 // src/customers/ProductDetails.jsx
-import React, { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import { X, Plus, Minus, ShoppingBag, ShieldCheck } from 'lucide-react';
 
@@ -15,11 +15,20 @@ export default function ProductDetails({ product, onClose }) {
     if (qty > 1) setQty(p => p - 1);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative flex flex-col md:flex-row max-h-[90vh] md:max-h-none overflow-y-auto md:overflow-visible">
-        
-        <button 
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative flex flex-col md:flex-row max-h-[90vh] md:max-h-none overflow-y-auto md:overflow-visible" onClick={(e) => e.stopPropagation()}>
+
+        <button
           onClick={onClose}
           className="absolute top-3 right-3 bg-white/80 backdrop-blur-md p-1.5 rounded-full text-gray-500 hover:text-gray-800 shadow z-10 transition"
         >
@@ -28,9 +37,9 @@ export default function ProductDetails({ product, onClose }) {
 
         {/* Product Images Frame */}
         <div className="w-full md:w-1/2 bg-gray-50 relative pt-[80%] md:pt-0 md:h-auto">
-          <img 
-            src={product.image} 
-            alt={product.name} 
+          <img
+            src={product.image}
+            alt={product.name}
             className="md:absolute md:inset-0 w-full h-full object-cover"
           />
         </div>
@@ -43,10 +52,10 @@ export default function ProductDetails({ product, onClose }) {
             </span>
             <h2 className="text-xl font-black text-gray-900 mt-2 mb-1">{product.name}</h2>
             <p className="text-2xl font-black text-orange-600 mb-4">ETB {product.price.toLocaleString()}</p>
-            
+
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Product Description</h4>
             <p className="text-sm text-gray-600 leading-relaxed mb-4">{product.description}</p>
-            
+
             {/* Available Stock Indicator */}
             <div className="flex items-center gap-2 mb-6">
               <span className="text-xs font-semibold text-gray-500">Available Stock Status:</span>

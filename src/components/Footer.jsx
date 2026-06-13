@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Phone, Mail, CreditCard } from "lucide-react";
 
 function Footer() {
   return (

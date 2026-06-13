@@ -1,5 +1,5 @@
 // src/Admin/Dashboard.jsx
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { AppContext } from "../context/AppContext";
 
 const metrics = (products = []) => [
@@ -50,7 +50,7 @@ const Dashboard = () => {
   // Pull from AppContext safely, fallback to an empty array if context is undefined
   const context = useContext(AppContext);
   const products = context?.products || [];
-  
+
   const cards = metrics(products);
   const maxStock = products.length > 0 ? Math.max(...products.map((p) => Number(p.stock) || 0)) : 0;
 
@@ -106,9 +106,8 @@ const Dashboard = () => {
                   <td className="px-5 py-3 font-medium text-gray-900">{p.name || "Unnamed Product"}</td>
                   <td className="px-5 py-3">
                     <span
-                      className={`inline-block px-2 py-0.5 rounded-full text-[11px] ${
-                        categoryStyle[p.category] || "bg-gray-100 text-gray-600"
-                      }`}
+                      className={`inline-block px-2 py-0.5 rounded-full text-[11px] ${categoryStyle[p.category] || "bg-gray-100 text-gray-600"
+                        }`}
                     >
                       {p.category || "Uncategorized"}
                     </span>

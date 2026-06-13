@@ -1,5 +1,5 @@
 // src/customers/index.jsx
-import React, { useState, useContext, useMemo } from 'react';
+import { useState, useContext, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Search, ShoppingBag, Eye, Plus, Minus, X, HelpCircle, Truck } from 'lucide-react';
 import ProductDetails from './ProductDetails';
@@ -8,7 +8,7 @@ import OrderTracking from './OrderTracking';
 
 export default function CustomerHome() {
   const { products, categories, cart, addToCart, updateCartQuantity, removeFromCart } = useContext(AppContext);
-  
+
   // Filter States
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -23,8 +23,8 @@ export default function CustomerHome() {
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const matchesCategory = selectedCategory === "All" || p.category === selectedCategory;
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [products, selectedCategory, searchQuery]);
@@ -37,8 +37,8 @@ export default function CustomerHome() {
       {/* Dynamic Promotion Sub-Header Bar */}
       <div className="bg-orange-600 text-white text-center py-2 text-xs font-semibold px-4 flex justify-between items-center">
         <span>⚡ Quick Payments via Cash on Delivery Enabled Across Towns!</span>
-        <button 
-          onClick={() => setIsTrackingOpen(true)} 
+        <button
+          onClick={() => setIsTrackingOpen(true)}
           className="bg-orange-700 hover:bg-orange-800 px-3 py-0.5 rounded text-xs flex items-center gap-1 transition"
         >
           <Truck size={12} /> Track Order Status
@@ -47,14 +47,14 @@ export default function CustomerHome() {
 
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        
+
         {/* Search and Category Module Filtering Component Grid */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-4 rounded-xl shadow-sm">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input 
-              type="text" 
-              placeholder="Search products by title, spec details..." 
+            <input
+              type="text"
+              placeholder="Search products by title, spec details..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
@@ -63,9 +63,8 @@ export default function CustomerHome() {
           <div className="flex flex-wrap gap-2 overflow-x-auto pb-1 md:pb-0">
             <button
               onClick={() => setSelectedCategory("All")}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${
-                selectedCategory === "All" ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${selectedCategory === "All" ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
             >
               All Categories
             </button>
@@ -73,9 +72,8 @@ export default function CustomerHome() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${
-                  selectedCategory === cat ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${selectedCategory === cat ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
               >
                 {cat}
               </button>
@@ -94,9 +92,9 @@ export default function CustomerHome() {
             {filteredProducts.map(product => (
               <div key={product.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col group">
                 <div className="relative bg-gray-100 pt-[100%] overflow-hidden">
-                  <img 
-                    src={product.image || "https://picsum.photos/400"} 
-                    alt={product.name} 
+                  <img
+                    src={product.image || "https://picsum.photos/400"}
+                    alt={product.name}
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-300"
                   />
                   {product.stock === 0 && (
@@ -114,7 +112,7 @@ export default function CustomerHome() {
                   <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">{product.category}</span>
                   <h3 className="font-bold text-sm text-gray-800 line-clamp-1 mb-1">{product.name}</h3>
                   <p className="text-xs text-gray-500 line-clamp-2 flex-1 mb-3">{product.description}</p>
-                  
+
                   <div className="flex justify-between items-center pt-2 border-t border-gray-50">
                     <div>
                       <span className="text-[11px] block text-gray-400 font-medium">Price</span>
@@ -136,11 +134,10 @@ export default function CustomerHome() {
                     <button
                       disabled={product.stock === 0}
                       onClick={() => addToCart(product, 1)}
-                      className={`col-span-3 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm ${
-                        product.stock === 0 
-                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                      className={`col-span-3 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm ${product.stock === 0
+                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                           : 'bg-orange-600 hover:bg-orange-700 text-white'
-                      }`}
+                        }`}
                     >
                       <ShoppingBag size={14} /> Add to Cart
                     </button>
@@ -196,14 +193,14 @@ export default function CustomerHome() {
                       <h4 className="font-bold text-sm text-gray-800 truncate">{item.product.name}</h4>
                       <p className="text-xs text-gray-500 mb-1">ETB {item.product.price.toLocaleString()}</p>
                       <div className="flex items-center gap-2">
-                        <button 
+                        <button
                           onClick={() => updateCartQuantity(item.product.id, -1)}
                           className="bg-white border border-gray-200 p-1 rounded-md text-gray-600 hover:bg-gray-100"
                         >
                           <Minus size={12} />
                         </button>
                         <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
-                        <button 
+                        <button
                           onClick={() => updateCartQuantity(item.product.id, 1)}
                           className="bg-white border border-gray-200 p-1 rounded-md text-gray-600 hover:bg-gray-100"
                         >

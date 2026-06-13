@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import CustomerHome from "./customers/index";
 import Login from "./Admin/Login";
@@ -7,10 +7,7 @@ import Dashboard from "./Admin/Dashboard";
 import Orders from "./Admin/Order";
 import ProductAdmin from "./Admin/Product";
 import { AppContext } from './context/AppContext';
-// FIXED: Removed the non-existent 'ReceiptCw' icon token to prevent bundling crashes
 import { ShoppingBag, LayoutDashboard, Database, Store, LogIn, LogOut } from 'lucide-react';
-import Header from "./components/Header"
-import Footer from "./components/Footer"
 
 function App() {
   const { isAdminLoggedIn, handleLogout } = useContext(AppContext);

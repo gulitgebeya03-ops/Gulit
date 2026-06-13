@@ -1,5 +1,5 @@
 // src/Admin/Login.jsx
-import React, { useState, useContext } from 'react';
+import { useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
@@ -47,8 +47,8 @@ export default function Login() {
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Account Email</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               placeholder="admin@mail.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -58,8 +58,8 @@ export default function Login() {
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Secret Key</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               placeholder="••••••••"
               value={password}
               onChange={e => setPassword(e.target.value)}
